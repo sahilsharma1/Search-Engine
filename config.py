@@ -3,6 +3,6 @@
 settings = dict(
 	host = "localhost",
 	user = "root",
-	password = "MySql",
+	password = "",
 	database_name = "search_engine"
 	)
