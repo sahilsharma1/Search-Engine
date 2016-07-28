@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hello World</title>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+</head>
+<body>
+	<div>
+		<input type="text" name="search" value="IITG" id="search_box" onkeypress="handle(event)">
+		<img src="http://127.0.0.1:5000/get_image?type=1" onclick="startDictation()" height="30px" width="30px">
+		<a href="#" id="search">Search</a>
+	</div>
+	<div>
+		<p>Hit button for search terms</p>
+		<button id="lastOneHour">Last One Hour</button>
+		<button id="lastFiveHour">Last Five Hour</button>
+	</div>	
+	<div id="result"></div>
+</body>
+<script type="text/javascript">
+	var array = [];
+	function updateAutoCompleteDB(){
+		$.ajax({
+			url : "/updateAutoCompleteDB",
+			success : function(response){
+				// alert(response);
+				var array = response.split(",");
+				$( "#search_box" ).autocomplete({
+      				source: array
+   				});
+			}
+		});
+	}
+	function updateAutoCompleteJS(term){
+		array.push(term);
+		alert(array);
+		$( "#search_box" ).autocomplete({
+      		source: array
+   		});
+	}
+	var autocompleteTexts = [];
+	function search(){
+		var term = $("input[name='search']").val();
+			$.ajax({
+				url : "/search",
+				data :  {term : term},
+				success : function(response){
+					$("#result").html(response);
+					var suggestions = document.getElementsByClassName('suggestions');
+					for (var i = 0; i < suggestions.length; i++) {
+						suggestions[i].addEventListener("click",function(event){
+							term = event.target.innerHTML;
+							$("input[name='search']").val(term);
+							document.getElementById("search").click();
+							updateAutoCompleteDB()
+						});
+					}
+				}
+			});
+	}
+	function get_terms(time){
+		$.ajax({
+			url: "/get_terms",
+			data : {time:time},
+			success : function(response){
+				$("#result").html(response);
+			}
+		});
+	}
+	function handle(e){
+		if(e.keyCode === 13){
+            search();
+        }
+
+        return false;
+	}
+	$(document).ready(function(){
+		
+		updateAutoCompleteDB();
+
+		$("#search").click(function(event){
+			event.preventDefault();
+			search();
+		});
+		$("#lastOneHour").click(function(){
+			get_terms(1);
+		});
+		$("#lastFiveHour").click(function(){
+			get_terms(5);
+		});
+	});
+
+	function startDictation() {
+		// alert("hjdkfd");
+ 
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+ 
+      var recognition = new webkitSpeechRecognition();
+ 
+      recognition.continuous = false;
+      recognition.interimResults = false;
+ 
+      recognition.lang = "en-US";
+      recognition.start();
+ 
+      recognition.onresult = function(e) {
+        document.getElementById('search_box').value = e.results[0][0].transcript;
+        recognition.stop();
+     	search();
+      };
+ 
+      recognition.onerror = function(e) {
+      	console.log(e);
+        recognition.stop();
+      }
+ 
+    }
+  }
+
+</script>
+</html>
